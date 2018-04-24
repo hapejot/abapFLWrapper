@@ -5,6 +5,6 @@
     "url": "git+https://github.com/hapejot/abapFLWrapper.git"
   },
   "devDependencies": {
-    "abapDI": "^0"
+    "abapDI": "^v1.0"
   }
 }
