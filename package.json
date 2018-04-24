@@ -1,4 +1,6 @@
 {
+  "name": "abapFLWrapper",
+  "version": "v0.0",
   "license": "MIT",
   "repository": {
     "type": "git",
