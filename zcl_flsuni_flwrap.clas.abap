@@ -13,6 +13,7 @@ ENDCLASS.
 
 
 CLASS zcl_flsuni_flwrap IMPLEMENTATION.
+
   METHOD zif_flsuni~function_import_doku.
     CALL FUNCTION 'FUNCTION_IMPORT_DOKU'
       EXPORTING

@@ -4,6 +4,7 @@ CLASS zcl_flseoq_wrap DEFINITION
   CREATE PUBLIC .
 
   PUBLIC SECTION.
+    INTERFACES zif_flseoq.
     CLASS-METHODS test
       RETURNING
         VALUE(r_rc) TYPE i.
@@ -16,18 +17,6 @@ CLASS zcl_flseoq_wrap DEFINITION
         db_error
         no_access
       .
-    METHODS seo_class_create_complete
-      IMPORTING
-        devclass TYPE devclass
-      CHANGING
-        class    TYPE vseoclass
-      EXCEPTIONS
-        existing
-        is_interface
-        db_error
-        component_error
-        no_access
-        other.
     METHODS seo_class_existence_check
       IMPORTING
         clskey     TYPE seoclskey
@@ -54,76 +43,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_flseoq_wrap IMPLEMENTATION.
-
-
-  METHOD seo_class_create_complete.
-    CALL FUNCTION 'SEO_CLASS_CREATE_COMPLETE'
-      EXPORTING
-*       corrnr          =     " Correction Number
-        devclass        = devclass    " Package
-        version         = seoc_version_active    " Active/Inactive
-*       genflag         = SPACE    " Generation Flag
-*       authority_check =
-*       overwrite       =
-*       suppress_method_generation     =
-*       suppress_refactoring_support   =
-*       method_sources  =     " Table of Methodsources
-*       locals_def      =     " Sourcetext klassenlokaler Klassen (Definitionsteil)
-*       locals_imp      =     " Sourcetext klassenlokaler Klassen (Implementierungsteil)
-*       locals_mac      =     " ABAP-Source
-*       suppress_index_update          =
-*       typesrc         =     " Updated type Source parameter to support more than 9999 char
-*       suppress_corr   =
-*       suppress_dialog =
-*       lifecycle_manager              =     " Lifecycle manager
-*       locals_au       =     " Sourcecode for local testclasses
-*       lock_handle     =     " Lock Handle
-*       suppress_unlock =
-*       suppress_commit =     " No DB_COMMIT will be executed
-*       generate_method_impls_wo_frame =     " X -> METHOD_SOURCES have to contain METHOD and ENDMETHOD sta
-*    IMPORTING
-*       korrnr          =     " Request/Task
-*    TABLES
-*       class_descriptions             =     " Short description class/interface
-*       component_descriptions         =     " Short description class/interface component
-*       subcomponent_descriptions      =     " Class/interface subcomponent short description
-      CHANGING
-        class           = class
-*       inheritance     =
-*       redefinitions   =
-*       implementings   =
-*       impl_details    =
-*       attributes      =
-*       methods         =
-*       events          =
-*       types           =
-*       type_source     =     " This parameter is deprecated. Please use typesrc.
-*       parameters      =
-*       exceps          =
-*       aliases         =
-*       typepusages     =     " Type group application
-*       clsdeferrds     =
-*       intdeferrds     =
-*       friendships     =
-      EXCEPTIONS
-        existing        = 1
-        is_interface    = 2
-        db_error        = 3
-        component_error = 4
-        no_access       = 5
-        other           = 6
-        OTHERS          = 7.
-    CASE sy-subrc.
-      WHEN 0. " do nothing
-      WHEN 1. RAISE existing.
-      WHEN 2. RAISE is_interface.
-      WHEN 3. RAISE db_error.
-      WHEN 4. RAISE component_error.
-      WHEN 5. RAISE no_access.
-      WHEN OTHERS. RAISE other.
-    ENDCASE.
-  ENDMETHOD.
+CLASS ZCL_FLSEOQ_WRAP IMPLEMENTATION.
 
 
   METHOD seo_class_delete_complete.
@@ -194,36 +114,36 @@ CLASS zcl_flseoq_wrap IMPLEMENTATION.
      ).
 
 
-    DATA(l_app) = NEW zcl_flseoq_wrap( ).
-    CALL METHOD l_app->seo_class_existence_check
-      EXPORTING
-        clskey        = VALUE seoclskey( clsname = l_class-clsname )
-      IMPORTING
-        not_active    = DATA(not_active)
-      EXCEPTIONS
-        not_specified = 1
-        not_existing  = 2
-        is_interface  = 3
-        no_text       = 4
-        inconsistent  = 5
-        other         = 6
-        OTHERS        = 7.
-    IF sy-subrc IS INITIAL.
-      l_app->seo_class_delete_complete(
-        EXPORTING
-          clskey       = VALUE seoclskey( clsname = l_class-clsname )
-        EXCEPTIONS
-          not_existing = 1
-          is_interface = 2
-          db_error     = 3
-          no_access    = 4
-          OTHERS       = 5
-      ).
-      IF sy-subrc <> 0.
-        MESSAGE ID sy-msgid TYPE 'I' NUMBER sy-msgno
-                   WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-      ENDIF.
-    ENDIF.
+    DATA(l_app) = CAST zif_flseoq(  NEW zcl_flseoq_wrap( ) ).
+*    CALL METHOD l_app->seo_class_existence_check
+*      EXPORTING
+*        clskey        = VALUE seoclskey( clsname = l_class-clsname )
+*      IMPORTING
+*        not_active    = DATA(not_active)
+*      EXCEPTIONS
+*        not_specified = 1
+*        not_existing  = 2
+*        is_interface  = 3
+*        no_text       = 4
+*        inconsistent  = 5
+*        other         = 6
+*        OTHERS        = 7.
+*    IF sy-subrc IS INITIAL.
+*      l_app->seo_class_delete_complete(
+*        EXPORTING
+*          clskey       = VALUE seoclskey( clsname = l_class-clsname )
+*        EXCEPTIONS
+*          not_existing = 1
+*          is_interface = 2
+*          db_error     = 3
+*          no_access    = 4
+*          OTHERS       = 5
+*      ).
+*      IF sy-subrc <> 0.
+*        MESSAGE ID sy-msgid TYPE 'I' NUMBER sy-msgno
+*                   WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+*      ENDIF.
+*    ENDIF.
 
     CALL METHOD l_app->seo_class_create_complete
       EXPORTING
@@ -242,5 +162,74 @@ CLASS zcl_flseoq_wrap IMPLEMENTATION.
     MESSAGE ID sy-msgid TYPE 'I' NUMBER sy-msgno
             WITH sy-msgv1 sy-msgv2 sy-msgv4 sy-msgv4.
 
+  ENDMETHOD.
+
+
+  METHOD zif_flseoq~seo_class_create_complete.
+    CALL FUNCTION 'SEO_CLASS_CREATE_COMPLETE'
+      EXPORTING
+*       corrnr                     =     " Correction Number
+        devclass                   = devclass    " Package
+        version                    = seoc_version_active    " Active/Inactive
+*       genflag                    = SPACE    " Generation Flag
+*       authority_check            =
+        overwrite                  = abap_true
+        suppress_method_generation = abap_false
+*       suppress_refactoring_support   =
+        method_sources             = method_sources    " Table of Methodsources
+*       locals_def                 =     " Sourcetext klassenlokaler Klassen (Definitionsteil)
+*       locals_imp                 =     " Sourcetext klassenlokaler Klassen (Implementierungsteil)
+*       locals_mac                 =     " ABAP-Source
+*       suppress_index_update      =
+*       typesrc                    =     " Updated type Source parameter to support more than 9999 char
+*       suppress_corr              =
+*       suppress_dialog            =
+*       lifecycle_manager          =     " Lifecycle manager
+*       locals_au                  =     " Sourcecode for local testclasses
+*       lock_handle                =     " Lock Handle
+*       suppress_unlock            =
+*       suppress_commit            =     " No DB_COMMIT will be executed
+*       generate_method_impls_wo_frame =     " X -> METHOD_SOURCES have to contain METHOD and ENDMETHOD sta
+*    IMPORTING
+*       korrnr                     =     " Request/Task
+*    TABLES
+*       class_descriptions         =     " Short description class/interface
+*       component_descriptions     =     " Short description class/interface component
+*       subcomponent_descriptions  =     " Class/interface subcomponent short description
+      CHANGING
+        class                      = class
+*       inheritance                =
+*       redefinitions              =
+        implementings              = implementings
+*       impl_details               =
+*       attributes                 =
+        methods                    = methods
+*       events                     =
+        types                      = types
+*       type_source                =     " This parameter is deprecated. Please use typesrc.
+        parameters                 = parameters
+*       exceps                     =
+*       aliases                    =
+*       typepusages                =     " Type group application
+*       clsdeferrds                =
+*       intdeferrds                =
+*       friendships                =
+      EXCEPTIONS
+        existing                   = 1
+        is_interface               = 2
+        db_error                   = 3
+        component_error            = 4
+        no_access                  = 5
+        other                      = 6
+        OTHERS                     = 7.
+    CASE sy-subrc.
+      WHEN 0. " do nothing
+      WHEN 1. RAISE existing.
+      WHEN 2. RAISE is_interface.
+      WHEN 3. RAISE db_error.
+      WHEN 4. RAISE component_error.
+      WHEN 5. RAISE no_access.
+      WHEN OTHERS. RAISE other.
+    ENDCASE.
   ENDMETHOD.
 ENDCLASS.

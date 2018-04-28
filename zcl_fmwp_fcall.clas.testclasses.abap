@@ -133,10 +133,10 @@ CLASS ltcl_main IMPLEMENTATION.
   METHOD build_call_combined.
     DATA(cut) = NEW zcl_fmwp_fcall( ).
     cut->set_name( 'function_name' ).
-    cut->add( i_type = cut->c_tables i_name = 'table1' i_value = 'tvalue' ).
-    cut->add( i_type = cut->c_importing i_name = 'imp1' i_value = 'i_value' ).
-    cut->add( i_type = cut->c_exporting i_name = 'exp1' i_value = 'e_value' ).
-    cut->add( i_type = cut->c_changing i_name = 'chg1' i_value = 'c_value' ).
+    cut->add( i_type = cut->c_tables    i_name = 'table1' i_value = 'tvalue' ).
+    cut->add( i_type = cut->c_importing i_name = 'imp1'   i_value = 'i_value' ).
+    cut->add( i_type = cut->c_exporting i_name = 'exp1'   i_value = 'e_value' ).
+    cut->add( i_type = cut->c_changing  i_name = 'chg1'   i_value = 'c_value' ).
     cut->add( i_type = cut->c_exception i_name = 'param1' ).
 
 
@@ -149,10 +149,10 @@ CLASS ltcl_main IMPLEMENTATION.
       ( |exp1 = e_value| )
       ( |importing| )
       ( |imp1 = i_value| )
-      ( |changing| )
-      ( |chg1 = c_value| )
       ( |tables| )
       ( |table1 = tvalue| )
+      ( |changing| )
+      ( |chg1 = c_value| )
       ( |exceptions| )
       ( |param1 = 1| )
       ( |others = 2| )

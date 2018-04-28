@@ -69,8 +69,8 @@ CLASS zcl_fmwp_fcall IMPLEMENTATION.
     et_source = VALUE #( ( |call function '{ m_name }'| ) ).
     CALL METHOD append_params EXPORTING i_section = 'exporting' i_type = c_exporting CHANGING ct_source = et_source.
     CALL METHOD append_params EXPORTING i_section = 'importing' i_type = c_importing CHANGING ct_source = et_source.
-    CALL METHOD append_params EXPORTING i_section = 'changing' i_type = c_changing CHANGING ct_source = et_source.
     CALL METHOD append_params EXPORTING i_section = 'tables' i_type = c_tables CHANGING ct_source = et_source.
+    CALL METHOD append_params EXPORTING i_section = 'changing' i_type = c_changing CHANGING ct_source = et_source.
     APPEND |exceptions| TO et_source.
     LOOP AT mt_param INTO DATA(ls_param) WHERE ptype = c_exception.
       DATA(exc_num) = sy-index.
