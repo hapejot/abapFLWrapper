@@ -54,7 +54,7 @@ CLASS zcl_fmwp_fcall IMPLEMENTATION.
 
     DATA lt_lines TYPE STANDARD TABLE OF string.
 
-    lt_lines = VALUE #( FOR <x> IN mt_param WHERE ( ptype = i_type ) ( |{ <x>-name } = { <x>-value }| ) ).
+    lt_lines = VALUE #( FOR <x> IN mt_param WHERE ( ptype = i_type ) ( |  { <x>-name } = { <x>-value }| ) ).
 
     IF lt_lines IS NOT INITIAL.
       APPEND i_section TO ct_source.
@@ -67,16 +67,17 @@ CLASS zcl_fmwp_fcall IMPLEMENTATION.
   METHOD build_source.
 
     et_source = VALUE #( ( |call function '{ m_name }'| ) ).
-    CALL METHOD append_params EXPORTING i_section = 'exporting' i_type = c_exporting CHANGING ct_source = et_source.
-    CALL METHOD append_params EXPORTING i_section = 'importing' i_type = c_importing CHANGING ct_source = et_source.
-    CALL METHOD append_params EXPORTING i_section = 'tables' i_type = c_tables CHANGING ct_source = et_source.
-    CALL METHOD append_params EXPORTING i_section = 'changing' i_type = c_changing CHANGING ct_source = et_source.
-    APPEND |exceptions| TO et_source.
+    CALL METHOD append_params EXPORTING i_section = 'EXPORTING' i_type = c_importing CHANGING ct_source = et_source.
+    CALL METHOD append_params EXPORTING i_section = 'IMPORTING' i_type = c_exporting CHANGING ct_source = et_source.
+    CALL METHOD append_params EXPORTING i_section = 'TABLES' i_type = c_tables CHANGING ct_source = et_source.
+    CALL METHOD append_params EXPORTING i_section = 'CHANGING' i_type = c_changing CHANGING ct_source = et_source.
+    APPEND |EXCEPTIONS| TO et_source.
+    DATA(exc_num) = 1.
     LOOP AT mt_param INTO DATA(ls_param) WHERE ptype = c_exception.
-      DATA(exc_num) = sy-index.
-      APPEND |{ ls_param-name } = { exc_num }| TO et_source.
+      APPEND |  { ls_param-name } = { exc_num }| TO et_source.
+      ADD 1 TO exc_num.
     ENDLOOP.
-    APPEND |others = { exc_num + 1 }| TO et_source.
+    APPEND |  others = { exc_num }| TO et_source.
     APPEND |.| TO et_source.
 
   ENDMETHOD.

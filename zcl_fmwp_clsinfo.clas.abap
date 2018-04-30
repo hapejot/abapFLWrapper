@@ -1,7 +1,7 @@
 CLASS zcl_fmwp_clsinfo DEFINITION
   PUBLIC
   FINAL
-  CREATE PUBLIC .
+  CREATE PUBLIC GLOBAL FRIENDS zcl_fmwp_clsadptr .
 
   PUBLIC SECTION.
     TYPES: ty_helper_type TYPE c LENGTH 1.
@@ -206,6 +206,7 @@ CLASS zcl_fmwp_clsinfo IMPLEMENTATION.
                             pardecltyp = l_pardecl
                             typtype = COND #( WHEN i_ref = abap_true THEN seoo_typtype_ref_to ELSE seoo_typtype_type )
                             type = i_type
+                            parpasstyp = seos_parpasstyp_byreference
                             ).
 
   ENDMETHOD.
@@ -237,5 +238,4 @@ CLASS zcl_fmwp_clsinfo IMPLEMENTATION.
             ).
 
   ENDMETHOD.
-
 ENDCLASS.

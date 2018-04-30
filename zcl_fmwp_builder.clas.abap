@@ -7,12 +7,14 @@ CLASS zcl_fmwp_builder DEFINITION
     INTERFACES zif_fmwp_builder.
     METHODS constructor
       IMPORTING
-        ir_gen  TYPE REF TO zif_fmwp_gen
-        ir_seoq TYPE REF TO zif_flseoq.
+        ir_gen      TYPE REF TO zif_fmwp_gen
+        ir_seoq     TYPE REF TO zif_flseoq
+        ir_clsadptr TYPE REF TO zcl_fmwp_clsadptr.
   PROTECTED SECTION.
   PRIVATE SECTION.
     DATA mr_gen TYPE REF TO zif_fmwp_gen.
     DATA mr_seoq TYPE REF TO zif_flseoq.
+    DATA mr_clsadptr TYPE REF TO zcl_fmwp_clsadptr.
 ENDCLASS.
 
 
@@ -24,6 +26,7 @@ CLASS ZCL_FMWP_BUILDER IMPLEMENTATION.
 
     mr_gen = ir_gen.
     mr_seoq = ir_seoq.
+    mr_clsadptr = ir_clsadptr.
 
   ENDMETHOD.
 
@@ -32,11 +35,13 @@ CLASS ZCL_FMWP_BUILDER IMPLEMENTATION.
 
     DATA(l_cls) = NEW zcl_fmwp_clsinfo( ).
     l_cls->class_set_def( i_name = |zcl_fl{ i_area }_gwrap| ).
-    CALL METHOD mr_gen->class_generate
-      EXPORTING
-        i_name  = i_funcname
-      CHANGING
-        c_class = l_cls.
+    LOOP AT it_funcnames INTO DATA(i_funcname).
+      CALL METHOD mr_gen->class_generate
+        EXPORTING
+          i_name  = CONV #( i_funcname )
+        CHANGING
+          c_class = l_cls.
+    ENDLOOP.
 
     DATA(l_class)           = l_cls->class_get_def( ).
     DATA(lt_methods)        = l_cls->method_get_all_methods( ).
@@ -70,5 +75,10 @@ CLASS ZCL_FMWP_BUILDER IMPLEMENTATION.
     ENDIF.
 
 
+  ENDMETHOD.
+
+
+  METHOD zif_fmwp_builder~load.
+    l_cls = mr_clsadptr->load( |ZCL_FL{ i_area CASE = UPPER }_GWRAP| ).
   ENDMETHOD.
 ENDCLASS.
