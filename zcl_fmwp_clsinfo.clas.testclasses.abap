@@ -17,8 +17,9 @@ CLASS ltcl_main IMPLEMENTATION.
     DATA(cut) = NEW zcl_fmwp_clsinfo( ).
     CALL METHOD cut->method_set_imp
       EXPORTING
-        i_name    = 'TEST_METHOD_NAME'
-        it_source = VALUE #( ( |first line| ) ( |Second Line| ) ).
+        i_method = VALUE #(
+          cpdname = 'TEST_METHOD_NAME'
+          source  = VALUE #( ( |first line| ) ( |Second Line| ) ) ).
     CALL METHOD cut->method_get_imp
       EXPORTING
         i_fname  = 'TEST_METHOD_NAME'
@@ -31,16 +32,18 @@ CLASS ltcl_main IMPLEMENTATION.
     DATA(cut) = NEW zcl_fmwp_clsinfo( ).
     CALL METHOD cut->method_set_def
       EXPORTING
-        i_name = 'TEST_METHOD_NAME'.
+        i_method = VALUE #(
+         cmpname = 'TEST_METHOD_NAME' ).
   ENDMETHOD.
 
   METHOD method_param.
     DATA(cut) = NEW zcl_fmwp_clsinfo( ).
     CALL METHOD cut->method_set_param
       EXPORTING
-        i_method = 'TEST_METHOD_NAME'
-        i_name   = 'PARAM1'
-        i_type   = 'STRING'.
+        i_param = VALUE #(
+          cmpname = 'TEST_METHOD_NAME'
+          sconame  = 'PARAM1'
+          type  = 'STRING' ).
     DATA(params) = cut->method_get_all_params( ).
     cl_abap_unit_assert=>assert_equals(
             msg = 'TEST_METHOD_NAME'
@@ -54,7 +57,8 @@ CLASS ltcl_main IMPLEMENTATION.
             )
             act = params[ cmpname = 'TEST_METHOD_NAME' sconame = 'PARAM1' ] ).
 
-    cut->type_set( i_name = 'TT_TEST' i_source = 'tt_test type standard table of string.' ).
+    cut->type_set( VALUE #( cmpname = 'TT_TEST'
+                            typesrc = 'tt_test type standard table of string.' ) ).
     DATA(types) = cut->type_get_all( ).
     cl_abap_unit_assert=>assert_equals( msg = 'TYPES' exp = VALUE seo_types(
                                         (

@@ -12,16 +12,20 @@ CLASS zcl_fmwp_clsadptr DEFINITION
         IMPORTING
           i_name       TYPE string
         RETURNING
-          VALUE(r_cls) TYPE REF TO zcl_fmwp_clsinfo
-        .
+          VALUE(r_cls) TYPE REF TO zcl_fmwp_clsinfo,
+      class_create
+        IMPORTING
+          l_cls TYPE REF TO zcl_fmwp_clsinfo.
   PROTECTED SECTION.
   PRIVATE SECTION.
     CONSTANTS c_tmpdevclass TYPE devclass VALUE '$TMP' ##NO_TEXT.
     DATA:
-         mr_seoq TYPE REF TO zif_flseoq.
-    METHODS class_create
+      mr_seoq                   TYPE REF TO zif_flseoq.
+    METHODS load_implemented_methods
       IMPORTING
-        l_cls TYPE REF TO zcl_fmwp_clsinfo.
+        i_cls  TYPE REF TO zcl_fmwp_clsinfo
+        i_impl TYPE vseoimplem.
+
 ENDCLASS.
 
 
@@ -30,9 +34,9 @@ CLASS zcl_fmwp_clsadptr IMPLEMENTATION.
 
 
   METHOD class_create.
+
     DATA(l_class)           = l_cls->class_get_def( ).
     DATA(lt_methods)        = l_cls->method_get_all_methods( ).
-    DATA(lt_method_imps)    = l_cls->method_get_all_impls( ).
     DATA(lt_params)         = l_cls->method_get_all_params( ).
     DATA(lt_types)          = l_cls->type_get_all( ).
     CALL METHOD mr_seoq->seo_class_create_complete
@@ -42,9 +46,9 @@ CLASS zcl_fmwp_clsadptr IMPLEMENTATION.
       CHANGING
         class           = l_class
         methods         = lt_methods
-        implementings   = lt_method_imps
         parameters      = lt_params
         types           = lt_types
+        implementings   = l_cls->mt_implementings
       EXCEPTIONS
         existing        = 1
         is_interface    = 2
@@ -65,44 +69,130 @@ CLASS zcl_fmwp_clsadptr IMPLEMENTATION.
   METHOD load.
 
     DATA:
-      lt_attr     TYPE zcl_flseoy_wrap=>tt_vseoattrib,
-      lt_ids      TYPE zcl_flseoy_wrap=>tt_seoclskey,
-      lt_info     TYPE zcl_flseoy_wrap=>tt_vseoclif,
-      lt_error    TYPE zcl_flseoy_wrap=>tt_rpygser,
-      lt_event    TYPE zcl_flseoy_wrap=>tt_vseoevent,
-      lt_except   TYPE zcl_flseoy_wrap=>tt_vseoexcep,
-      lt_friends  TYPE zcl_flseoy_wrap=>tt_seofriends,
-      lt_instance TYPE zcl_flseoy_wrap=>tt_seoimplrel,
-      lt_meta     TYPE zcl_flseoy_wrap=>tt_seometarel,
-      lt_method   TYPE zcl_flseoy_wrap=>tt_vseomethod,
-      lt_param    TYPE zcl_flseoy_wrap=>tt_vseoparam.
+      lt_info                   TYPE zcl_flseoy_wrap=>tt_vseoclif,
+      aliases                   TYPE seoo_aliases_r,
+      attributes                TYPE seoo_attributes_r,
+      class                     TYPE vseoclass,
+      clsdeferrds               TYPE seot_clsdeferrds_r,
+      enhancement_attributes    TYPE enhclasstabattrib,
+      enhancement_events        TYPE enhclasstabevent,
+      enhancement_implementings TYPE enhclasstabimplementing,
+      enhancement_methods       TYPE enhmeth_tabheader,
+      enhancement_types         TYPE enhtype_tab,
+      events                    TYPE seoo_events_r,
+      exceps                    TYPE seos_exceptions_r,
+      explore_implementings     TYPE seok_int_typeinfos,
+      explore_inheritance       TYPE seok_cls_typeinfos,
+      friendships               TYPE seof_friendships_r,
+      implementings             TYPE seor_implementings_r,
+      impl_details              TYPE seor_redefinitions_r,
+      inheritance               TYPE vseoextend,
+      intdeferrds               TYPE seot_intdeferrds_r,
+      methods                   TYPE seoo_methods_r,
+      parameters                TYPE seos_parameters_r,
+      redefinitions             TYPE seor_redefinitions_r,
+      typepusages               TYPE seot_typepusages_r,
+      types                     TYPE seoo_types_r,
+      lt_source                 TYPE seop_source.
 
     DATA(seoy) = NEW zcl_flseoy_wrap( ).
     DATA(seop) = NEW zcl_flseop_wrap( ).
+    DATA(seok) = NEW zcl_flseok_wrap( ).
 
-    lt_ids = VALUE #( ( clsname = i_name ) ).
-    seoy->seo_clif_multi_read(
-      CHANGING
-        attribute_set           = lt_attr
-        clif_ids                = lt_ids
-        clif_info_set           = lt_info
-        error_set               = lt_error
-        event_set               = lt_event
-        exception_set           = lt_except
-        friends_relation_set    = lt_friends
-        instance_relation_set   = lt_instance
-        meta_relation_set       = lt_meta
-        method_set              = lt_method
-        parameter_set           = lt_param
-    ).
-    IF lines( lt_info ) > 0.
+    CALL METHOD seok->seo_class_typeinfo_get
+      EXPORTING
+        clskey                    = VALUE #( clsname = i_name )
+*       version                   = SEOC_VERSION_INACTIVE
+*       state                     = '1'
+*       with_descriptions         =
+*       resolve_eventhandler_typeinfo =
+*       with_master_language      =
+*       with_enhancements         =
+*       read_active_enha          =
+*       enha_action               =
+*       ignore_switches           = 'X'
+      IMPORTING
+        aliases                   = aliases
+        attributes                = attributes
+        class                     = class
+        clsdeferrds               = clsdeferrds
+        enhancement_attributes    = enhancement_attributes
+        enhancement_events        = enhancement_events
+        enhancement_implementings = enhancement_implementings
+        enhancement_methods       = enhancement_methods
+        enhancement_types         = enhancement_types
+        events                    = events
+        exceps                    = exceps
+        explore_implementings     = explore_implementings
+        explore_inheritance       = explore_inheritance
+        friendships               = friendships
+        implementings             = implementings
+        impl_details              = impl_details
+        inheritance               = inheritance
+        intdeferrds               = intdeferrds
+        methods                   = methods
+        parameters                = parameters
+        redefinitions             = redefinitions
+        typepusages               = typepusages
+        types                     = types.
+
+
+
+    IF class IS NOT INITIAL.
       r_cls = NEW zcl_fmwp_clsinfo( ).
-      r_cls->ms_class = CORRESPONDING #( lt_info[ 1 ] ).
-      r_cls->mt_methods = lt_method.
-      r_cls->mt_parameters = lt_param.
+      r_cls->ms_class = class.
+      r_cls->mt_methods = methods.
+      r_cls->mt_parameters = parameters.
+      r_cls->mt_types = types.
+      r_cls->mt_implementings = implementings.
+      r_cls->mt_explore_impl = explore_implementings.
       " types ?
-      " sources ?
+      " sources
+      LOOP AT methods INTO DATA(ls_meth).
+        CALL FUNCTION 'SEO_METHOD_GET_SOURCE'
+          EXPORTING
+            mtdkey = VALUE seocpdkey(    clsname = ls_meth-clsname
+                                 cpdname = ls_meth-cmpname  )
+            state  = 'A'
+*           with_enhancements             =     " X = liest auch die Sourcecode Plug-ins
+          IMPORTING
+            source = lt_source
+          EXCEPTIONS
+            OTHERS = 6.
+        r_cls->method_set_imp( i_method = VALUE #( cpdname = ls_meth-cmpname source = lt_source )  ).
+      ENDLOOP.
+      LOOP AT explore_implementings INTO DATA(ls_impl).
+        LOOP AT ls_impl-methods INTO DATA(ls_impl_meth).
+          DATA(cpdname) = |{ ls_impl_meth-clsname }~{ ls_impl_meth-cmpname }|.
+          CALL FUNCTION 'SEO_METHOD_GET_SOURCE'
+            EXPORTING
+              mtdkey = VALUE seocpdkey(    clsname = class-clsname
+                                   cpdname = cpdname )
+              state  = 'A'
+*             with_enhancements             =     " X = liest auch die Sourcecode Plug-ins
+            IMPORTING
+              source = lt_source
+            EXCEPTIONS
+              OTHERS = 6.
+          r_cls->method_set_imp( i_method = VALUE #( cpdname = cpdname source = lt_source )  ).
+        ENDLOOP.
+      ENDLOOP.
+
     ENDIF.
 
   ENDMETHOD.
+
+  METHOD load_implemented_methods.
+    DATA: lt_methods TYPE seoo_methods_r.
+    DATA(seok) = NEW zcl_flseok_wrap( ).
+
+    CALL METHOD seok->seo_class_typeinfo_get
+      EXPORTING
+        clskey  = VALUE #( clsname = i_impl-refclsname )
+        version = seoc_version_active
+      IMPORTING
+        methods = lt_methods.
+
+  ENDMETHOD.
+
 ENDCLASS.

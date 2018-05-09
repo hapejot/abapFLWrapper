@@ -92,6 +92,8 @@ CLASS ZCL_FMWP_FMADPTR_IMP IMPLEMENTATION.
                 kind = zcl_fmwp_fminfo=>c_importing
                 parameter = <xi>-parameter
                 reference = <xi>-reference
+                default = <xi>-default
+                optional = <xi>-optional
                 typ = cond #( when <xi>-dbfield is initial then <xi>-typ else <xi>-dbfield )
               ) ) ).
       r_fm->append_parameters( VALUE zcl_fmwp_fminfo=>tt_parameter(

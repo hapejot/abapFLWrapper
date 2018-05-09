@@ -27,6 +27,8 @@ CLASS zcl_fmwp_fminfo DEFINITION
         ref_class TYPE rs38l_clas,
         line_of   TYPE rs38l_lino,
         table_of  TYPE rs38l_tabo,
+        default   TYPE default__3,
+        optional  TYPE abap_bool,
       END OF t_parameter,
       tt_parameter TYPE STANDARD TABLE OF t_parameter WITH KEY parameter.
     METHODS get_head
@@ -50,7 +52,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_FMWP_FMINFO IMPLEMENTATION.
+CLASS zcl_fmwp_fminfo IMPLEMENTATION.
 
 
   METHOD append_parameters.
