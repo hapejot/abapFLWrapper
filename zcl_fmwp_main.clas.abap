@@ -41,7 +41,6 @@ CLASS zcl_fmwp_main DEFINITION
           i_area TYPE string OPTIONAL,
       update_from_existing_class.
 
-
     " event handlers
     METHODS:
       on_grid_double_click FOR EVENT double_click
@@ -118,7 +117,10 @@ CLASS zcl_fmwp_main IMPLEMENTATION.
 
     DATA(l_pname) = |SAPL{ i_area }|.
     m_area = i_area.
-    SELECT pname, funcname, substring( pname,4,30 ) AS area FROM tfdir  WHERE pname = @l_pname INTO CORRESPONDING FIELDS OF TABLE @mt_tfdir .
+    SELECT pname, funcname, substring( pname, 4, 30 ) AS area
+        FROM tfdir
+        WHERE pname = @l_pname
+        INTO CORRESPONDING FIELDS OF TABLE @mt_tfdir .
     WRITE /.
     m_alv = NEW cl_gui_alv_grid(
         i_parent = cl_gui_container=>default_screen ).
@@ -213,12 +215,14 @@ CLASS zcl_fmwp_main IMPLEMENTATION.
     CASE e_ucomm.
       WHEN c_ucomm_generate.
         MESSAGE |generate { m_area }| TYPE 'I'.
-        lt_funcnames = VALUE #( FOR <x> IN mt_tfdir WHERE ( gnrte = abap_true ) ( <x>-funcname ) ).
+        lt_funcnames = VALUE #( FOR <x> IN mt_tfdir WHERE ( gnrte = abap_true )
+                                                            ( <x>-funcname ) ).
         mr_builder->generate(
           EXPORTING
             i_area     = m_area
             it_funcnames = lt_funcnames
         ).
+
     ENDCASE.
 
   ENDMETHOD.

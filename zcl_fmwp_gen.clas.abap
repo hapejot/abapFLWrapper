@@ -43,34 +43,34 @@ CLASS zcl_fmwp_gen IMPLEMENTATION.
     c_class->method_set_def( VALUE #( cmpname = l_name ) ).
 
     DATA(m_fm) = m_fmadptr->read_fm( i_name ).
-    DATA(result) = m_fm->get_parameters( ).
+    DATA(l_fm_parameters) = m_fm->get_parameters( ).
     DATA(lo_fcall) = NEW zcl_fmwp_fcall( ).
-    LOOP AT result INTO DATA(ls_param).
-      lo_fcall->add(  i_type = ls_param-kind
-                      i_name = |{ ls_param-parameter }|
-                      i_value = |{ ls_param-parameter }| ).
+    LOOP AT l_fm_parameters INTO DATA(ls_fm_parameter).
+      lo_fcall->add(  i_type = ls_fm_parameter-kind
+                      i_name = |{ ls_fm_parameter-parameter }|
+                      i_value = |{ ls_fm_parameter-parameter }| ).
       DATA(ls_par) = VALUE vseoparam(
                       cmpname  = l_name
-                      sconame  = ls_param-parameter
+                      sconame  = ls_fm_parameter-parameter
                       ).
-      IF ls_param-kind = 'T'.
-        DATA(l_tname) = CONV seocmpname(  |TT_{ ls_param-typ }| ).
+      IF ls_fm_parameter-kind = 'T'. " if it is a table parameter, create local type for it.
+        DATA(l_tname) = CONV seocmpname(  |TT_{ ls_fm_parameter-typ }| ).
         c_class->type_set( VALUE #(
                                     cmpname = l_tname
-                                    typesrc = |{ l_tname } type standard table of { ls_param-typ }| ) ).
+                                    typesrc = |{ l_tname } type standard table of { ls_fm_parameter-typ }| ) ).
         ls_par-type =  l_tname.
-        ls_par-pardecltyp = get_decltype( ls_param-kind ).
+        ls_par-pardecltyp = get_decltype( ls_fm_parameter-kind ).
       ELSE.
-        IF ls_param-typ IS INITIAL.
+        IF ls_fm_parameter-typ IS INITIAL. " if there is no type declared, use single character as type.
           ls_par-type = 'CHAR1'.
         ELSE.
-          ls_par-type       = ls_param-typ.
+          ls_par-type       = ls_fm_parameter-typ.
         ENDIF.
         ls_par-typtype    = seoo_typtype_type.
-        ls_par-paroptionl = ls_param-optional.
-        ls_par-parvalue   = ls_param-default.
-        ls_par-pardecltyp =  get_decltype( ls_param-kind ).
-        IF ls_param-reference IS INITIAL.
+        ls_par-paroptionl = ls_fm_parameter-optional.
+        ls_par-parvalue   = ls_fm_parameter-default.
+        ls_par-pardecltyp =  get_decltype( ls_fm_parameter-kind ).
+        IF ls_fm_parameter-reference IS INITIAL.
           ls_par-parpasstyp = seos_parpasstyp_byvalue.
         ELSE.
           ls_par-parpasstyp = seos_parpasstyp_byreference.

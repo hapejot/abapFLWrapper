@@ -1,7 +1,7 @@
 CLASS zcl_fmwp_clsinfo DEFINITION
   PUBLIC
   FINAL
-  CREATE PUBLIC GLOBAL FRIENDS zcl_fmwp_clsadptr .
+  CREATE PUBLIC GLOBAL FRIENDS zcl_fmwp_clsadptr zcl_fmwp_clsadptr_tmp.
 
   PUBLIC SECTION.
     TYPES: ty_helper_type TYPE c LENGTH 1.
@@ -40,12 +40,16 @@ CLASS zcl_fmwp_clsinfo DEFINITION
                                   VALUE(r_result) TYPE seo_types,
       interface_set
         IMPORTING
-          i_implementing TYPE vseoimplem.
+          i_interface TYPE vseointerf
+          i_methods   TYPE seo_methods,
+      get_devclass RETURNING VALUE(r_result) TYPE tadir-devclass,
+      set_devclass IMPORTING i_m_devclass TYPE tadir-devclass.
 
   PROTECTED SECTION.
   PRIVATE SECTION.
     DATA:
       ms_class          TYPE vseoclass,
+      mt_attributes     TYPE seoo_attributes_r,
       mt_method_sources TYPE seo_method_source_table,
       mt_methods        TYPE seo_methods, " vseomethod
       mt_method_impls   TYPE seo_implementings,
@@ -53,6 +57,7 @@ CLASS zcl_fmwp_clsinfo DEFINITION
       mt_types          TYPE seo_types,
       mt_implementings  TYPE seor_implementings_r,
       mt_explore_impl   TYPE seok_int_typeinfos,
+      m_devclass        TYPE tadir-devclass,
       m_clsname         TYPE seoclsname.
 
 
@@ -89,9 +94,34 @@ CLASS zcl_fmwp_clsinfo IMPLEMENTATION.
 
   METHOD interface_set.
 
-    APPEND VALUE #( BASE i_implementing
-                    clsname     = ms_class-clsname
-                  ) TO mt_implementings.
+    IF NOT line_exists( mt_implementings[ clsname = ms_class-clsname ] ).
+      APPEND VALUE vseoimplem(
+          clsname    = ms_class-clsname
+          refclsname = i_interface-clsname
+          version    = VALUE #( )
+          exposure   = 2
+          state      = seoc_state_implemented
+          reltype    = VALUE #( )
+          relname    = VALUE #( )
+          impfinal   = VALUE #( )
+          impabstrct = VALUE #( )
+          editorder  = VALUE #( )
+      ) TO mt_implementings.
+      APPEND VALUE seok_int_typeinfo(
+          interface   = i_interface
+          attributes  = VALUE #( )
+          methods     = i_methods
+          events      = VALUE #( )
+          types       = VALUE #( )
+          parameters  = VALUE #( )
+          exceptions  = VALUE #( )
+          comprisings = VALUE #( )
+          aliases     = VALUE #( )
+          typepusages = VALUE #( )
+          clsdeferrds = VALUE #( )
+          intdeferrds = VALUE #( )
+      ) TO mt_explore_impl.
+    ENDIF.
 
   ENDMETHOD.
 
@@ -219,4 +249,12 @@ CLASS zcl_fmwp_clsinfo IMPLEMENTATION.
                         ).
 
   ENDMETHOD.
+  METHOD get_devclass.
+    r_result = me->m_devclass.
+  ENDMETHOD.
+
+  METHOD set_devclass.
+    me->m_devclass = i_m_devclass.
+  ENDMETHOD.
+
 ENDCLASS.

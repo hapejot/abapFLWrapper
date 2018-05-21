@@ -201,8 +201,8 @@ CLASS ZCL_FLSEOQ_WRAP IMPLEMENTATION.
 *       inheritance                =
 *       redefinitions              =
         implementings              = implementings
-*       impl_details               =
-*       attributes                 =
+        impl_details               = impl_details
+        attributes                 = attributes
         methods                    = methods
 *       events                     =
         types                      = types

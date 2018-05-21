@@ -28,6 +28,9 @@ CLASS zcl_fmwp_intfinfo DEFINITION
     METHODS type_get_all
       RETURNING
         VALUE(r_result) TYPE seoo_types_r.
+    METHODS interface_set
+      IMPORTING
+        i_interface TYPE vseointerf.
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -47,11 +50,12 @@ CLASS zcl_fmwp_intfinfo DEFINITION
       ms_interface TYPE vseointerf.
 
 
+
 ENDCLASS.
 
 
 
-CLASS zcl_fmwp_intfinfo IMPLEMENTATION.
+CLASS ZCL_FMWP_INTFINFO IMPLEMENTATION.
 
 
   METHOD constructor.
@@ -61,7 +65,7 @@ CLASS zcl_fmwp_intfinfo IMPLEMENTATION.
                         state = seoc_state_implemented
                         exposure = seoc_exposure_public
                         langu = 'EN'
-                        descript = 'Generated Testclass'
+                        descript = 'Generated interface'
                         unicode = 'X'
                     ).
 
@@ -72,9 +76,26 @@ CLASS zcl_fmwp_intfinfo IMPLEMENTATION.
     r_result = ms_interface.
   ENDMETHOD.
 
+
+  METHOD interface_set.
+    ms_interface = VALUE #( BASE i_interface
+                            clsname = |{ i_interface-clsname CASE = UPPER }|
+                            state = seoc_state_implemented
+                            exposure = seoc_exposure_public
+                            unicode = 'X'
+                         ).
+  ENDMETHOD.
+
+
   METHOD methods_get.
     r_result = mt_methods.
   ENDMETHOD.
+
+
+  METHOD method_params_get.
+    r_result = parameters.
+  ENDMETHOD.
+
 
   METHOD method_set_def.
 
@@ -102,8 +123,8 @@ CLASS zcl_fmwp_intfinfo IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD method_params_get.
-    r_result = parameters.
+  METHOD type_get_all.
+    r_result = types.
   ENDMETHOD.
 
 
@@ -116,9 +137,4 @@ CLASS zcl_fmwp_intfinfo IMPLEMENTATION.
     lr_type->* = VALUE #( BASE i_ls_type  clsname = ms_interface-clsname ).
 
   ENDMETHOD.
-
-  METHOD type_get_all.
-    r_result = types.
-  ENDMETHOD.
-
 ENDCLASS.

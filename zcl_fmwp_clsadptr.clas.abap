@@ -20,11 +20,16 @@ CLASS zcl_fmwp_clsadptr DEFINITION
   PRIVATE SECTION.
     CONSTANTS c_tmpdevclass TYPE devclass VALUE '$TMP' ##NO_TEXT.
     DATA:
-      mr_seoq                   TYPE REF TO zif_flseoq.
-    METHODS load_implemented_methods
+      mr_seoq TYPE REF TO zif_flseoq,
+      m_tadir TYPE tadir.
+    METHODS method_read_source
       IMPORTING
-        i_cls  TYPE REF TO zcl_fmwp_clsinfo
-        i_impl TYPE vseoimplem.
+        i_clsname       TYPE vseomethod-clsname
+        i_mthname       TYPE seocpdname
+      RETURNING
+        VALUE(r_result) TYPE rswsourcet.
+
+
 
 ENDCLASS.
 
@@ -35,20 +40,44 @@ CLASS zcl_fmwp_clsadptr IMPLEMENTATION.
 
   METHOD class_create.
 
+    m_tadir-devclass = l_cls->m_devclass.
+
+    IF m_tadir IS INITIAL.
+      m_tadir-devclass = c_tmpdevclass.
+    ENDIF.
+
     DATA(l_class)           = l_cls->class_get_def( ).
     DATA(lt_methods)        = l_cls->method_get_all_methods( ).
     DATA(lt_params)         = l_cls->method_get_all_params( ).
     DATA(lt_types)          = l_cls->type_get_all( ).
+    DATA(lt_impl_details) = VALUE seo_redefinitions( ).
+    LOOP AT l_cls->mt_implementings INTO DATA(ls_impl).
+      DATA(ls_impl_det) = l_cls->mt_explore_impl[ interface-clsname = ls_impl-refclsname ].
+      LOOP AT ls_impl_det-methods INTO DATA(ls_impl_meth).
+        APPEND VALUE seoredef(
+            clsname    = l_class-clsname
+            refclsname = ls_impl-refclsname
+            version    = VALUE #( )
+            mtdname    = ls_impl_meth-cmpname
+            mtdabstrct = VALUE #( )
+            mtdfinal   = VALUE #( )
+            attvalue   = VALUE #( )
+            exposure   = VALUE #( )
+        ) TO lt_impl_details.
+      ENDLOOP.
+    ENDLOOP.
     CALL METHOD mr_seoq->seo_class_create_complete
       EXPORTING
-        devclass        = c_tmpdevclass
+        devclass        = m_tadir-devclass
         method_sources  = l_cls->method_get_all_sources( )
       CHANGING
         class           = l_class
+        attributes      = l_cls->mt_attributes
         methods         = lt_methods
         parameters      = lt_params
         types           = lt_types
         implementings   = l_cls->mt_implementings
+        impl_details    = lt_impl_details
       EXCEPTIONS
         existing        = 1
         is_interface    = 2
@@ -93,7 +122,7 @@ CLASS zcl_fmwp_clsadptr IMPLEMENTATION.
       redefinitions             TYPE seor_redefinitions_r,
       typepusages               TYPE seot_typepusages_r,
       types                     TYPE seoo_types_r,
-      lt_source                 TYPE seop_source.
+      lt_source                 TYPE seop_source_string.
 
     DATA(seoy) = NEW zcl_flseoy_wrap( ).
     DATA(seop) = NEW zcl_flseop_wrap( ).
@@ -139,42 +168,35 @@ CLASS zcl_fmwp_clsadptr IMPLEMENTATION.
 
 
     IF class IS NOT INITIAL.
+      SELECT SINGLE * FROM tadir
+        INTO m_tadir
+        WHERE pgmid = 'R3TR'
+          AND object = 'CLAS'
+          AND obj_name = class-clsname.
       r_cls = NEW zcl_fmwp_clsinfo( ).
-      r_cls->ms_class = class.
-      r_cls->mt_methods = methods.
-      r_cls->mt_parameters = parameters.
-      r_cls->mt_types = types.
-      r_cls->mt_implementings = implementings.
-      r_cls->mt_explore_impl = explore_implementings.
+      r_cls->ms_class           = class.
+      r_cls->mt_methods         = methods.
+      r_cls->mt_attributes      = attributes.
+      r_cls->mt_parameters      = parameters.
+      r_cls->mt_types           = types.
+      r_cls->mt_implementings   = implementings.
+      r_cls->mt_explore_impl    = explore_implementings.
+      r_cls->m_devclass         = m_tadir-devclass.
       " types ?
       " sources
       LOOP AT methods INTO DATA(ls_meth).
-        CALL FUNCTION 'SEO_METHOD_GET_SOURCE'
-          EXPORTING
-            mtdkey = VALUE seocpdkey(    clsname = ls_meth-clsname
-                                 cpdname = ls_meth-cmpname  )
-            state  = 'A'
-*           with_enhancements             =     " X = liest auch die Sourcecode Plug-ins
-          IMPORTING
-            source = lt_source
-          EXCEPTIONS
-            OTHERS = 6.
-        r_cls->method_set_imp( i_method = VALUE #( cpdname = ls_meth-cmpname source = lt_source )  ).
+        lt_source = method_read_source(   i_clsname = ls_meth-clsname
+                                          i_mthname = CONV #( ls_meth-cmpname ) ).
+        r_cls->method_set_imp( i_method = VALUE #(  cpdname = ls_meth-cmpname
+                                                    source = lt_source )  ).
       ENDLOOP.
       LOOP AT explore_implementings INTO DATA(ls_impl).
         LOOP AT ls_impl-methods INTO DATA(ls_impl_meth).
           DATA(cpdname) = |{ ls_impl_meth-clsname }~{ ls_impl_meth-cmpname }|.
-          CALL FUNCTION 'SEO_METHOD_GET_SOURCE'
-            EXPORTING
-              mtdkey = VALUE seocpdkey(    clsname = class-clsname
-                                   cpdname = cpdname )
-              state  = 'A'
-*             with_enhancements             =     " X = liest auch die Sourcecode Plug-ins
-            IMPORTING
-              source = lt_source
-            EXCEPTIONS
-              OTHERS = 6.
-          r_cls->method_set_imp( i_method = VALUE #( cpdname = cpdname source = lt_source )  ).
+          lt_source = method_read_source(   i_clsname = class-clsname
+                                            i_mthname = CONV #( cpdname ) ).
+          r_cls->method_set_imp( i_method = VALUE #(    cpdname = cpdname
+                                                        source = lt_source )  ).
         ENDLOOP.
       ENDLOOP.
 
@@ -182,16 +204,27 @@ CLASS zcl_fmwp_clsadptr IMPLEMENTATION.
 
   ENDMETHOD.
 
-  METHOD load_implemented_methods.
-    DATA: lt_methods TYPE seoo_methods_r.
-    DATA(seok) = NEW zcl_flseok_wrap( ).
 
-    CALL METHOD seok->seo_class_typeinfo_get
+
+
+  METHOD method_read_source.
+
+    CALL FUNCTION 'SEO_METHOD_GET_SOURCE'
       EXPORTING
-        clskey  = VALUE #( clsname = i_impl-refclsname )
-        version = seoc_version_active
+        mtdkey          = VALUE seocpdkey(    clsname = i_clsname
+                                      cpdname = i_mthname )
+        state           = 'A'
+*       with_enhancements             =     " X = liest auch die Sourcecode Plug-ins
       IMPORTING
-        methods = lt_methods.
+        source_expanded = r_result
+      EXCEPTIONS
+        OTHERS          = 6.
+    IF lines( r_result ) > 1.
+      " remove endmethod:
+      DELETE r_result INDEX lines( r_result ).
+      " remove method:
+      DELETE r_result INDEX 1.
+    ENDIF.
 
   ENDMETHOD.
 

@@ -10,6 +10,8 @@ INTERFACE zif_flseoq
       parameters     TYPE seos_parameters_r OPTIONAL
       implementings  TYPE seor_implementings_r OPTIONAL
       types          TYPE seoo_types_r OPTIONAL
+      impl_details   TYPE seo_redefinitions OPTIONAL
+      attributes     TYPE seoo_attributes_r OPTIONAL
     EXCEPTIONS
       existing
       is_interface

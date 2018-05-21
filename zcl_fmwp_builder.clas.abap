@@ -34,7 +34,7 @@ CLASS zcl_fmwp_builder IMPLEMENTATION.
   METHOD zif_fmwp_builder~generate.
 
     DATA(l_cls) = NEW zcl_fmwp_clsinfo( ).
-    l_cls->class_set_def( VALUE #( clsname = |zcl_fl{ i_area }_gwrap| ) ).
+    l_cls->class_set_def( VALUE #( clsname = |zcl_fl{ i_area }_wrap| ) ).
     LOOP AT it_funcnames INTO DATA(i_funcname).
       CALL METHOD mr_gen->class_generate
         EXPORTING
