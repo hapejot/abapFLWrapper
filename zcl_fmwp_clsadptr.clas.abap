@@ -98,7 +98,7 @@ CLASS zcl_fmwp_clsadptr IMPLEMENTATION.
   METHOD load.
 
     DATA:
-      lt_info                   TYPE zcl_flseoy_wrap=>tt_vseoclif,
+*      lt_info                   TYPE zcl_flseoy_wrap=>tt_vseoclif,
       aliases                   TYPE seoo_aliases_r,
       attributes                TYPE seoo_attributes_r,
       class                     TYPE vseoclass,

@@ -1,7 +1,7 @@
 CLASS zcl_fmwp_clsinfo DEFINITION
   PUBLIC
   FINAL
-  CREATE PUBLIC GLOBAL FRIENDS zcl_fmwp_clsadptr zcl_fmwp_clsadptr_tmp.
+  CREATE PUBLIC GLOBAL FRIENDS zcl_fmwp_clsadptr.
 
   PUBLIC SECTION.
     TYPES: ty_helper_type TYPE c LENGTH 1.
